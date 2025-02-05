@@ -217,3 +217,72 @@ SHOW TRIGGERS WHERE `Table` = 'Orders';
 DROP TRIGGER IF EXISTS PreventUnpaidOrders;
 DROP TRIGGER IF EXISTS UpdateStockOnOrder;
 
+-- Step next: Running Queries & Performance Optimization
+
+
+-- Step 5: Running Queries
+
+-- Retrieve all customers
+SELECT * FROM Customers;
+SELECT * FROM drivers;
+SELECT * FROM deliveries;
+SELECT * FROM menu;
+SELECT * FROM order_items;
+SELECT * FROM orders;
+SELECT * FROM payments;
+SELECT * FROM restaurants;
+
+-- Get all orders with customer details
+SELECT Orders.order_id, Customers.name, Orders.total_price, Orders.status
+FROM Orders
+JOIN Customers ON Orders.customer_id = Customers.customer_id;
+
+-- Find all menu items from a specific restaurant
+SELECT name, price FROM Menu WHERE restaurant_id = 1;
+
+-- Retrieve all completed payments
+SELECT * FROM Payments WHERE status = 'Completed';
+
+-- Check delivery status for an order
+SELECT Orders.order_id, 
+       COALESCE(Deliveries.delivery_status, 'Not Assigned') AS delivery_status
+FROM Orders
+LEFT JOIN Deliveries ON Orders.order_id = Deliveries.order_id;
+
+-- Find available drivers
+SELECT * FROM Drivers WHERE availability = 'Available';
+
+-- Step 6: Advanced Queries & Performance Optimization
+
+-- Find total orders and revenue per restaurant
+SELECT Restaurants.name, COUNT(Orders.order_id) AS total_orders, SUM(Orders.total_price) AS total_revenue
+FROM Orders
+JOIN Restaurants ON Orders.restaurant_id = Restaurants.restaurant_id
+GROUP BY Restaurants.name;
+
+-- Get the most popular menu item
+
+SELECT Menu.name, COUNT(Order_Items.menu_id) AS times_ordered
+FROM Order_Items
+JOIN Menu ON Order_Items.menu_id = Menu.menu_id
+GROUP BY Menu.name
+ORDER BY times_ordered DESC
+LIMIT 1;
+
+-- List customers who spent more than $50
+
+SELECT Customers.name, SUM(Orders.total_price) AS total_spent
+FROM Orders
+FORCE INDEX (idx_customer_id)
+JOIN Customers ON Orders.customer_id = Customers.customer_id
+GROUP BY Customers.name
+HAVING total_spent > 50;
+
+SHOW INDEXES FROM Orders;
+
+-- Create Indexes for faster lookups
+CREATE INDEX idx_customer_id ON Orders(customer_id);
+CREATE INDEX idx_restaurant_id ON Menu(restaurant_id);
+
+-- Optimize Joins by Using EXPLAIN
+EXPLAIN SELECT * FROM Orders JOIN Customers ON Orders.customer_id = Customers.customer_id;
