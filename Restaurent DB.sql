@@ -129,3 +129,91 @@ INSERT INTO Drivers (name, phone, vehicle_number, availability) VALUES
 INSERT INTO Deliveries (order_id, driver_id, delivery_status, delivery_time) VALUES
 (1, 1, 'Delivered', '2025-02-01 15:00:00'),
 (2, 2, 'Out for Delivery', NULL);
+
+-- Step 4: Stored Procedures & Triggers
+
+-- Stored Procedure to Insert New Order
+DELIMITER //
+CREATE PROCEDURE InsertNewOrder(
+    IN cust_id INT, 
+    IN rest_id INT, 
+    IN total DECIMAL(10,2)
+)
+BEGIN
+    -- Insert new order
+    INSERT INTO Orders (customer_id, restaurant_id, total_price) 
+    VALUES (cust_id, rest_id, total);
+
+    -- Get the last inserted order_id
+    SET @new_order_id = LAST_INSERT_ID();
+
+    -- Assign a driver (assuming first available driver)
+    SET @driver_id = (SELECT driver_id FROM Drivers WHERE availability = 'Available' LIMIT 1);
+
+    -- Insert into Deliveries table
+    IF @driver_id IS NOT NULL THEN
+        INSERT INTO Deliveries (order_id, driver_id, delivery_status, delivery_time) 
+        VALUES (@new_order_id, @driver_id, 'Out for Delivery', NULL);
+    END IF;
+END //
+DELIMITER ;
+
+
+-- Trigger to Prevent Orders from Customers with Unpaid Bills
+DELIMITER //
+CREATE TRIGGER PreventUnpaidOrders
+BEFORE INSERT ON Orders
+FOR EACH ROW
+BEGIN
+    DECLARE unpaid_count INT;
+    SELECT COUNT(*) INTO unpaid_count FROM Payments WHERE customer_id = NEW.customer_id AND status = 'Pending';
+    IF unpaid_count > 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Customer has unpaid bills';
+    END IF;
+END //
+DELIMITER ;
+
+-- Trigger to Auto-Update Stock on Order
+DELIMITER //
+CREATE TRIGGER UpdateStockOnOrder
+AFTER INSERT ON Order_Items
+FOR EACH ROW
+BEGIN
+    UPDATE Menu SET stock = stock - NEW.quantity WHERE menu_id = NEW.menu_id;
+END //
+DELIMITER ;
+
+-- Stored Procedure to Get Restaurant Revenue
+DELIMITER //
+CREATE PROCEDURE GetRestaurantRevenue(IN rest_id INT)
+BEGIN
+    SELECT SUM(total_price) AS total_revenue FROM Orders WHERE restaurant_id = rest_id;
+END //
+DELIMITER ;
+
+-- checking this procedures works or not
+-- checking stored procedure 
+-- Check if the Procedure Exists
+SHOW PROCEDURE STATUS WHERE Db = 'restaurant_db';
+-- Call the Procedure to Test It
+CALL InsertNewOrder(1, 1, 20.50);
+--  Verify the Insertion
+SELECT * FROM Orders ORDER BY order_id DESC;
+SELECT * FROM Deliveries ORDER BY delivery_id DESC;
+
+-- Checking Triggers For the PreventUnpaidOrders trigger:If they have an unpaid bill, you should get an error message:
+-- "Customer has unpaid bills".
+INSERT INTO Orders (customer_id, restaurant_id, total_price) VALUES (2, 1, 15.00);
+
+-- For UpdateStockOnOrder trigger:
+SELECT * FROM Menu WHERE menu_id = 1;
+-- Insert an order item:
+INSERT INTO Order_Items (order_id, menu_id, quantity, subtotal) VALUES (1, 1, 2, 11.98);
+SELECT * FROM Menu WHERE menu_id = 1;
+
+DROP PROCEDURE IF EXISTS InsertNewOrder;
+DROP PROCEDURE IF EXISTS GetRestaurantRevenue;
+SHOW TRIGGERS WHERE `Table` = 'Orders';
+DROP TRIGGER IF EXISTS PreventUnpaidOrders;
+DROP TRIGGER IF EXISTS UpdateStockOnOrder;
+
