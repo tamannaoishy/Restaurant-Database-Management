@@ -84,4 +84,4 @@ CREATE TABLE Drivers (
     vehicle_number VARCHAR(50) UNIQUE NOT NULL,
     availability ENUM('Available', 'Unavailable') DEFAULT 'Available'
 );
-
+SHOW TABLES;
