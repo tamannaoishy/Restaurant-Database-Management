@@ -85,3 +85,47 @@ CREATE TABLE Drivers (
     availability ENUM('Available', 'Unavailable') DEFAULT 'Available'
 );
 SHOW TABLES;
+
+-- Step 3: Insert Sample Data
+
+-- Insert into Customers
+INSERT INTO Customers (name, email, phone, address) VALUES
+('Alice Johnson', 'alice@example.com', '1234567890', '123 Main St'),
+('Bob Smith', 'bob@example.com', '0987654321', '456 Elm St');
+
+-- Insert into Restaurants
+INSERT INTO Restaurants (name, location, contact, rating) VALUES
+('Tasty Bites', 'Downtown', '555-1234', 4.5),
+('Spicy Corner', 'Uptown', '555-5678', 4.2);
+
+-- Insert into Menu
+INSERT INTO Menu (restaurant_id, name, description, price) VALUES
+(1, 'Burger', 'Delicious beef burger', 5.99),
+(1, 'Pizza', 'Cheese burst pizza', 8.99),
+(2, 'Pasta', 'Creamy Alfredo pasta', 7.50);
+
+-- Insert into Orders
+INSERT INTO Orders (customer_id, restaurant_id, total_price) VALUES
+(1, 1, 14.98),
+(2, 2, 7.50);
+
+-- Insert into Order_Items
+INSERT INTO Order_Items (order_id, menu_id, quantity, subtotal) VALUES
+(1, 1, 2, 11.98),
+(1, 2, 1, 8.99),
+(2, 3, 1, 7.50);
+
+-- Insert into Payments
+INSERT INTO Payments (order_id, payment_method, status, amount) VALUES
+(1, 'Credit Card', 'Completed', 14.98),
+(2, 'Cash', 'Pending', 7.50);
+
+-- Insert into Drivers
+INSERT INTO Drivers (name, phone, vehicle_number, availability) VALUES
+('John Doe', '2223334444', 'XYZ-1234', 'Available'),
+('Jane Roe', '5556667777', 'ABC-5678', 'Unavailable');
+
+-- Insert into Deliveries
+INSERT INTO Deliveries (order_id, driver_id, delivery_status, delivery_time) VALUES
+(1, 1, 'Delivered', '2025-02-01 15:00:00'),
+(2, 2, 'Out for Delivery', NULL);
